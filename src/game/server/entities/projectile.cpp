@@ -132,6 +132,13 @@ vec2 CProjectile::GetPos(float Time)
 	return CalcPos(m_Pos, m_Direction, Curvature, Speed, Time);
 }
 
+vec2 CProjectile::GetPos()
+{
+	float Ct = (Server()->Tick() - m_StartTick) / (float)Server()->TickSpeed();
+	vec2 CurPos = GetPos(Ct);
+	return CurPos;
+}
+
 void CProjectile::Tick()
 {
 	float Pt = (Server()->Tick() - m_StartTick - 1) / (float)Server()->TickSpeed();
@@ -150,6 +157,10 @@ void CProjectile::Tick()
 
 	if(pOwnerChar ? !pOwnerChar->GrenadeHitDisabled() : g_Config.m_SvHit)
 		pTargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, ColPos, m_Freeze ? 1.0f : 6.0f, ColPos, pOwnerChar, m_Owner);
+
+	CProjectile *pTargetProjectile = nullptr;
+	if(!pTargetChr)
+		pTargetProjectile = GameServer()->m_World.IntersectProjectile(PrevPos, ColPos, 30.0f, ColPos, this);
 
 	if(m_LifeSpan > -1)
 		m_LifeSpan--;
@@ -171,6 +182,18 @@ void CProjectile::Tick()
 	}
 	else if(m_Owner >= 0 && (m_Type != WEAPON_GRENADE || g_Config.m_SvDestroyBulletsOnDeath || m_BelongsToPracticeTeam))
 	{
+		m_MarkedForDestroy = true;
+		return;
+	}
+
+	if(m_Explosive && pTargetProjectile)
+	{
+		// TODO: this means ddrace teams get bypassed if the owner is currently dead
+		GameServer()->CreateExplosion(ColPos, m_Owner, m_Type, m_Owner == -1, (!pOwnerChar ? -1 : pOwnerChar->Team()),
+			(m_Owner != -1) ? TeamMask : CClientMask().set(), m_AffectedCharacters);
+		GameServer()->CreateSound(ColPos, m_SoundImpact,
+			(m_Owner != -1) ? TeamMask : CClientMask().set());
+
 		m_MarkedForDestroy = true;
 		return;
 	}

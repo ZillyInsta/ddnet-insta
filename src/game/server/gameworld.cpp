@@ -4,6 +4,8 @@
 #include "gameworld.h"
 #include "entities/character.h"
 #include "entity.h"
+#include "game/server/entities/ddnet_pvp/vanilla_projectile.h"
+#include "game/server/entities/projectile.h"
 #include "gamecontext.h"
 #include "gamecontroller.h"
 
@@ -314,6 +316,105 @@ CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, v
 			continue;
 
 		if(CollideWith != -1 && !p->CanCollide(CollideWith))
+			continue;
+
+		vec2 IntersectPos;
+		if(closest_point_on_line(Pos0, Pos1, p->m_Pos, IntersectPos))
+		{
+			float Len = distance(p->m_Pos, IntersectPos);
+			if(Len < p->m_ProximityRadius + Radius)
+			{
+				Len = distance(Pos0, IntersectPos);
+				if(Len < ClosestLen)
+				{
+					NewPos = IntersectPos;
+					ClosestLen = Len;
+					pClosest = p;
+				}
+			}
+		}
+	}
+
+	return pClosest;
+}
+
+// template <typename T> T *CGameWorld::IntersectEntity(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, const T *pNotThis)
+// {
+// 	// Find other players
+// 	float ClosestLen = distance(Pos0, Pos1) * 100.0f;
+// 	T *pClosest = 0;
+//
+// 	T *p = (T *)FindFirst(ENTTYPE_PROJECTILE);
+// 	for(; p; p = (T *)p->TypeNext())
+// 	{
+// 		if(p == pNotThis)
+// 			continue;
+//
+// 		vec2 IntersectPos;
+// 		if(closest_point_on_line(Pos0, Pos1, p->m_Pos, IntersectPos))
+// 		{
+// 			float Len = distance(p->m_Pos, IntersectPos);
+// 			if(Len < p->m_ProximityRadius + Radius)
+// 			{
+// 				Len = distance(Pos0, IntersectPos);
+// 				if(Len < ClosestLen)
+// 				{
+// 					NewPos = IntersectPos;
+// 					ClosestLen = Len;
+// 					pClosest = p;
+// 				}
+// 			}
+// 		}
+// 	}
+//
+// 	return pClosest;
+// }
+
+CProjectile *CGameWorld::IntersectProjectile(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, const CProjectile *pNotThis)
+{
+	// Find other players
+	float ClosestLen = distance(Pos0, Pos1) * 100.0f;
+	CProjectile *pClosest = 0;
+
+	CProjectile *p = (CProjectile *)FindFirst(ENTTYPE_PROJECTILE);
+	for(; p; p = (CProjectile *)p->TypeNext())
+	{
+		if(p == pNotThis)
+			continue;
+
+		// dbg_msg("intersect", "we=%.2f/%.2f   other=%.2f/%.2f", Pos1.x, Pos1.y, p->m_Pos.x, p->m_Pos.y);
+
+		vec2 IntersectPos;
+		if(closest_point_on_line(Pos0, Pos1, p->GetPos(), IntersectPos))
+		{
+			float Len = distance(p->GetPos(), IntersectPos);
+
+			if(Len < p->m_ProximityRadius + Radius)
+			{
+				Len = distance(Pos0, IntersectPos);
+				if(Len < ClosestLen)
+				{
+					NewPos = IntersectPos;
+					ClosestLen = Len;
+					pClosest = p;
+				}
+			}
+		}
+	}
+
+	return pClosest;
+}
+
+CVanillaProjectile *CGameWorld::IntersectVanillaProjectile(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, const CVanillaProjectile *pNotThis)
+{
+	// Find other players
+	float ClosestLen = distance(Pos0, Pos1) * 100.0f;
+	CVanillaProjectile *pClosest = 0;
+
+	CVanillaProjectile *p = (CVanillaProjectile *)FindFirst(ENTTYPE_PROJECTILE);
+	for(; p; p = (CVanillaProjectile *)p->TypeNext())
+	{
+		if(p == pNotThis)
 			continue;
 
 		vec2 IntersectPos;

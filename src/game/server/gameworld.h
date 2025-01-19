@@ -11,6 +11,8 @@
 
 class CEntity;
 class CCharacter;
+class CProjectile;
+class CVanillaProjectile;
 
 /*
 	Class: Game World
@@ -89,6 +91,10 @@ public:
 			Returns a pointer to the closest hit or NULL of there is no intersection.
 	*/
 	CCharacter *IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, const CCharacter *pNotThis = nullptr, int CollideWith = -1, const CCharacter *pThisOnly = nullptr);
+	// template <typename T> T *IntersectEntity(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, const T *pNotThis);
+	CProjectile *IntersectProjectile(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, const CProjectile *pNotThis);
+	CVanillaProjectile *IntersectVanillaProjectile(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, const CVanillaProjectile *pNotThis);
+
 	/*
 		Function: ClosestCharacter
 			Finds the closest CCharacter to a specific point.

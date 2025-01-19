@@ -125,6 +125,10 @@ void CVanillaProjectile::Tick()
 	if(pOwnerChar ? !pOwnerChar->GrenadeHitDisabled() : g_Config.m_SvHit)
 		pTargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, ColPos, m_Freeze ? 1.0f : 6.0f, ColPos, pOwnerChar, m_Owner);
 
+	CVanillaProjectile *pTargetProjectile = nullptr;
+	if(!pTargetChr)
+		pTargetProjectile = GameServer()->m_World.IntersectVanillaProjectile(PrevPos, ColPos, m_Freeze ? 1.0f : 6.0f, ColPos, this);
+
 	if(m_LifeSpan > -1)
 		m_LifeSpan--;
 
@@ -176,6 +180,14 @@ void CVanillaProjectile::Tick()
 				if(pChr && (m_Layer != LAYER_SWITCH || (m_Layer == LAYER_SWITCH && m_Number > 0 && Switchers()[m_Number].m_aStatus[pChr->Team()])))
 					pChr->Freeze();
 			}
+		}
+		else if(m_Explosive && pTargetProjectile)
+		{
+			// TODO: this means ddrace teams get bypassed if the owner is currently dead
+			GameServer()->CreateExplosion(ColPos, m_Owner, m_Type, m_Owner == -1, (!pOwnerChar ? -1 : pOwnerChar->Team()),
+				(m_Owner != -1) ? TeamMask : CClientMask().set());
+			GameServer()->CreateSound(ColPos, m_SoundImpact,
+				(m_Owner != -1) ? TeamMask : CClientMask().set());
 		}
 		else if(pTargetChr) // ddnet-insta
 			pTargetChr->TakeDamage(vec2(0, 0), 0, m_Owner, m_Type);
